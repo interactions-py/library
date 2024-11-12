@@ -38,6 +38,8 @@ class PartialEmoji(SnowflakeObject, DictSerializationMixin):
     """The custom emoji name, or standard unicode emoji in string"""
     animated: bool = attrs.field(repr=True, default=False)
     """Whether this emoji is animated"""
+    available: bool = attrs.field(repr=False, default=True)
+    """whether this emoji can be used, may be false due to loss of Server Boosts"""
 
     @classmethod
     def from_str(cls, emoji_str: str, *, language: str = "alias") -> Optional["PartialEmoji"]:
@@ -120,7 +122,7 @@ class CustomEmoji(PartialEmoji, ClientObject):
     _role_ids: List["Snowflake_Type"] = attrs.field(
         repr=False, factory=list, converter=optional(list_converter(to_snowflake))
     )
-    _guild_id: "Snowflake_Type" = attrs.field(repr=False, default=None, converter=to_snowflake)
+    _guild_id: "Snowflake_Type" = attrs.field(repr=False, default=None, converter=optional(to_snowflake))
 
     @classmethod
     def _process_dict(cls, data: Dict[str, Any], client: "Client") -> Dict[str, Any]:

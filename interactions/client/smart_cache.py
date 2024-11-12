@@ -642,7 +642,7 @@ class GlobalCache:
 
         """
         guild_id = to_snowflake(data["id"])
-        guild: Guild = self.guild_cache.get(guild_id)
+        guild: Guild | None = self.guild_cache.get(guild_id)
         if guild is None:
             guild = Guild.from_dict(data, self._client)
             self.guild_cache[guild_id] = guild
@@ -929,7 +929,7 @@ class GlobalCache:
         with suppress(KeyError):
             del data["guild_id"]  # discord sometimes packages a guild_id - this will cause an exception
 
-        emoji = CustomEmoji.from_dict(data, self._client, to_snowflake(guild_id))
+        emoji = CustomEmoji.from_dict(data, self._client, to_optional_snowflake(guild_id))
         if self.emoji_cache is not None:
             self.emoji_cache[emoji.id] = emoji
 

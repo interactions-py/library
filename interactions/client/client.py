@@ -535,6 +535,16 @@ class Client(
         return self.user.guilds
 
     @property
+    def guild_count(self) -> int:
+        """
+        Returns the number of guilds the bot is in.
+
+        This function is faster than using `len(client.guilds)` as it does not require using the cache.
+        As such, this is preferred when you only need the count of guilds.
+        """
+        return self.user.guild_count
+
+    @property
     def status(self) -> Status:
         """
         Get the status of the bot.
@@ -867,7 +877,9 @@ class Client(
         self._user._add_guilds(expected_guilds)
 
         if not self._startup:
-            while len(self.guilds) != len(expected_guilds):
+            while len(self.guilds) != len(
+                expected_guilds
+            ):  # TODO: potentially use self.guild_count instead of len(self.guilds)
                 try:  # wait to let guilds cache
                     await asyncio.wait_for(self._guild_event.wait(), self.guild_event_timeout)
                 except asyncio.TimeoutError:

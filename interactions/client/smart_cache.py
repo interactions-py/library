@@ -914,7 +914,7 @@ class GlobalCache:
         """
         return self.emoji_cache.get(to_optional_snowflake(emoji_id)) if self.emoji_cache is not None else None
 
-    def place_emoji_data(self, guild_id: "Snowflake_Type", data: discord_typings.EmojiData) -> "CustomEmoji":
+    def place_emoji_data(self, guild_id: "Snowflake_Type | None", data: discord_typings.EmojiData) -> "CustomEmoji":
         """
         Take json data representing an emoji, process it, and cache it. This cache is disabled by default, start your bot with `Client(enable_emoji_cache=True)` to enable it.
 

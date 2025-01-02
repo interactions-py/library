@@ -135,7 +135,7 @@ class CustomEmoji(PartialEmoji, ClientObject):
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], client: "Client", guild_id: int) -> "CustomEmoji":
+    def from_dict(cls, data: Dict[str, Any], client: "Client", guild_id: "Optional[Snowflake_Type]") -> "CustomEmoji":
         data = cls._process_dict(data, client)
         return cls(client=client, guild_id=guild_id, **cls._filter_kwargs(data, cls._get_init_keys()))
 
@@ -216,6 +216,9 @@ class CustomEmoji(PartialEmoji, ClientObject):
 
         """
         if not self._guild_id:
+            if reason:
+                raise ValueError("Cannot specify reason for application emoji.")
+
             await self.client.http.delete_application_emoji(self._client.app.id, self.id)
         else:
             await self._client.http.delete_guild_emoji(self._guild_id, self.id, reason=reason)

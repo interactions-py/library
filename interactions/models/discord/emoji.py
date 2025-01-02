@@ -122,7 +122,7 @@ class CustomEmoji(PartialEmoji, ClientObject):
     _role_ids: List["Snowflake_Type"] = attrs.field(
         repr=False, factory=list, converter=optional(list_converter(to_snowflake))
     )
-    _guild_id: "Snowflake_Type" = attrs.field(repr=False, default=None, converter=optional(to_snowflake))
+    _guild_id: "Optional[Snowflake_Type]" = attrs.field(repr=False, default=None, converter=optional(to_snowflake))
 
     @classmethod
     def _process_dict(cls, data: Dict[str, Any], client: "Client") -> Dict[str, Any]:
@@ -140,8 +140,8 @@ class CustomEmoji(PartialEmoji, ClientObject):
         return cls(client=client, guild_id=guild_id, **cls._filter_kwargs(data, cls._get_init_keys()))
 
     @property
-    def guild(self) -> "Guild":
-        """The guild this emoji belongs to."""
+    def guild(self) -> "Optional[Guild]":
+        """The guild this emoji belongs to, if applicable."""
         return self._client.cache.get_guild(self._guild_id)
 
     @property
@@ -161,6 +161,9 @@ class CustomEmoji(PartialEmoji, ClientObject):
         """Determines if this emoji is usable by the current user."""
         if not self.available:
             return False
+
+        if not self._guild_id:  # likely an application emoji
+            return True
 
         guild = self.guild
         return any(e_role_id in guild.me._role_ids for e_role_id in self._role_ids)
@@ -184,14 +187,23 @@ class CustomEmoji(PartialEmoji, ClientObject):
             The newly modified custom emoji.
 
         """
-        data_payload = dict_filter_none(
-            {
-                "name": name,
-                "roles": to_snowflake_list(roles) if roles else None,
-            }
-        )
+        if self._guild_id:
+            data_payload = dict_filter_none(
+                {
+                    "name": name,
+                    "roles": to_snowflake_list(roles) if roles else None,
+                }
+            )
 
-        updated_data = await self._client.http.modify_guild_emoji(data_payload, self._guild_id, self.id, reason=reason)
+            updated_data = await self._client.http.modify_guild_emoji(
+                data_payload, self._guild_id, self.id, reason=reason
+            )
+        else:
+            if roles or reason:
+                raise ValueError("Cannot specify roles or reason for application emoji.")
+
+            updated_data = await self.client.http.edit_application_emoji(self.bot.app.id, self.id, name)
+
         self.update_from_dict(updated_data)
         return self
 
@@ -204,9 +216,9 @@ class CustomEmoji(PartialEmoji, ClientObject):
 
         """
         if not self._guild_id:
-            raise ValueError("Cannot delete emoji, no guild id set.")
-
-        await self._client.http.delete_guild_emoji(self._guild_id, self.id, reason=reason)
+            await self.client.http.delete_application_emoji(self._client.app.id, self.id)
+        else:
+            await self._client.http.delete_guild_emoji(self._guild_id, self.id, reason=reason)
 
     @property
     def url(self) -> str:

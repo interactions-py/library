@@ -877,9 +877,7 @@ class Client(
         self._user._add_guilds(expected_guilds)
 
         if not self._startup:
-            while len(self.guilds) != len(
-                expected_guilds
-            ):  # TODO: potentially use self.guild_count instead of len(self.guilds)
+            while len(self.guilds) != len(expected_guilds):
                 try:  # wait to let guilds cache
                     await asyncio.wait_for(self._guild_event.wait(), self.guild_event_timeout)
                 except asyncio.TimeoutError:

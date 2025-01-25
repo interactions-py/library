@@ -381,9 +381,11 @@ class Paginator:
         self._message = await ctx.send(**self.to_dict(), **kwargs)
         self._author_id = ctx.author.id
 
-        if hasattr(ctx, "_prefixed_ctx"): # HybridContext
+        if hasattr(ctx, "token"):  # SlashContext
+            edit = ctx.edit
+        elif hasattr(ctx, "_prefixed_ctx"):  # HybridContext
             edit = partial(ctx.edit, message=self._message)
-        else:
+        else:  # PrefixedContext
             edit = self._message.edit
 
         if self.timeout_interval > 1:
@@ -407,10 +409,12 @@ class Paginator:
         self._message = await ctx.reply(**self.to_dict(), **kwargs)
         self._author_id = ctx.author.id
 
-        if hasattr(ctx, "_prefixed_ctx"): # HybridContext
+        if hasattr(ctx, "token"):  # SlashContext
+            edit = ctx.edit
+        elif hasattr(ctx, "_prefixed_ctx"):  # HybridContext
             edit = partial(ctx.edit, message=self._message)
-        else:
-            edit= self._message.edit
+        else:  # PrefixedContext
+            edit = self._message.edit
 
         if self.timeout_interval > 1:
             self._timeout_task = Timeout(self, edit)
